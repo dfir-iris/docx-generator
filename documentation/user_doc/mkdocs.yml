@@ -1,0 +1,6 @@
+site_name: DocxGenerator
+nav:
+    - Home: index.md
+    - Filters: filters.md
+    - Global Functions: globals.md
+    - About: about.md

@@ -1,0 +1,7 @@
+build/
+results/
+docx_generator.egg-info
+input_templates
+output_files
+__pycache__
+venv/
