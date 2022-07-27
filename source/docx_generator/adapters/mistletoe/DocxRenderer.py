@@ -3,6 +3,7 @@ Taken and adapted from Sarna Tool
 https://github.com/rsrdesarrollo/sarna
 """
 import logging
+import re
 
 from docxtpl import DocxTemplate
 from mistletoe.base_renderer import BaseRenderer
@@ -71,6 +72,9 @@ class DocxRenderer(BaseRenderer):
     @debug_token_rendering('Rendering Link.')
     def render_link(self, token):
         target = escape_url(token.target)
+
+        for child in token.children:
+            child.content = re.sub(r'<.*?>', '', child.content).strip()
 
         self._suppress_rtag_stack.append(True)
         inner = self.render_inner(token)
