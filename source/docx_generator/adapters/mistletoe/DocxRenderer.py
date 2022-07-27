@@ -91,10 +91,10 @@ class DocxRenderer(BaseRenderer):
         else:
             return make_run('', text)
 
-    @debug_token_rendering('Rendering Heading. NOT IMPLEMENTED.')
+    @debug_token_rendering('Rendering Heading.')
     def render_heading(self, token):
-        self.warnings.add('Markdown Headings are not implemented yet. It will be ignored')
-        return ''
+        style = getattr(self.style, 'header' + str(token.level))
+        return make_paragraph(style, self.render_inner(token))
 
     @debug_token_rendering('Rendering Paragraph.')
     def render_paragraph(self, token):
