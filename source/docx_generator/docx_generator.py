@@ -31,6 +31,7 @@ from docx_generator.adapters.mistletoe.DocxRenderer import DocxRenderer
 from docx_generator.exceptions.rendering_error import RenderingError
 from docx_generator.filters.filters import Filters
 from docx_generator.globals.globals import Globals
+from docx_generator.globals.picture_globals import PictureGlobals
 
 
 def _sanitize_path(path: str) -> str:
@@ -39,7 +40,7 @@ def _sanitize_path(path: str) -> str:
 
 
 class DocxGenerator(object):
-    def __init__(self, logger_mode: str = 'INFO', max_recursive_render_depth: int = 5):
+    def __init__(self, logger_mode: str = 'INFO', max_recursive_render_depth: int = 5, image_handler: PictureGlobals = None):
         logging.basicConfig(
             format='%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s',
             level=getattr(logging, logger_mode, logging.INFO)
@@ -48,6 +49,7 @@ class DocxGenerator(object):
         self._logger = logging.getLogger(__name__)
 
         self._max_recursive_render_depth = max_recursive_render_depth
+        self._image_handler = image_handler
 
     def _process_template_path(self, base_path: str, template_path: str) -> str:
         template_path = _sanitize_path(template_path)
@@ -74,7 +76,7 @@ class DocxGenerator(object):
         jinja2_custom_globals = Globals(base_path, template, jinja2_environment)
 
         jinja2_custom_filters.set_available_filters()
-        jinja2_custom_globals.set_available_globals()
+        jinja2_custom_globals.set_available_globals(self._image_handler)
 
     def _recursive_rendering(self, base_path: str, template_path: str, data: Dict, output_path: str, render_level: int):
         render_level += 1
@@ -83,7 +85,7 @@ class DocxGenerator(object):
         loaded_template = DocxTemplate(template_path)
         template_styles = get_document_render_styles(template_path)
 
-        docx_renderer = DocxRenderer(loaded_template)
+        docx_renderer = DocxRenderer(loaded_template, self._image_handler)
 
         jinja_custom_environment = Environment()
 
@@ -130,6 +132,10 @@ class DocxGenerator(object):
         processed_base_path = os.path.abspath(base_path)
         full_template_path = self._process_template_path(processed_base_path, template_path)
         full_output_path = self._process_output_path(processed_base_path, output_path)
+
+        if self._image_handler != None:
+            self._image_handler.set_base_path(processed_base_path)
+            self._image_handler.set_output_path(os.path.join(os.path.dirname(full_output_path), "images"))
 
         self._logger.info('Starting new report generation. Base path: {}. Template path: {}. Output path'.format(processed_base_path, full_template_path, full_output_path))
         self._recursive_rendering(processed_base_path, full_template_path, data, full_output_path, 0)

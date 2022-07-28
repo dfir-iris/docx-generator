@@ -21,6 +21,9 @@
 import logging
 import os
 import re
+import requests
+import shutil
+import uuid
 
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docxtpl import DocxTemplate, Subdoc
@@ -33,12 +36,22 @@ class PictureGlobals(object):
     def __init__(self, template: DocxTemplate, base_path: str):
         self._template = template
         self._base_path = base_path
+        self._output_path = None
 
         self._available_alignment_values = []
         for member in WD_PARAGRAPH_ALIGNMENT.__members__:
             self._available_alignment_values.append(member.name)
 
         self._logger = logging.getLogger(__name__)
+
+    def set_template(self, template: DocxTemplate):
+        self._template = template
+
+    def set_base_path(self, base_path: str):
+        self._base_path = base_path
+
+    def set_output_path(self, output_path: str):
+        self._output_path = output_path
 
     def _scale_picture(self, picture, new_width):
         aspect_ratio = float(picture.height) / float(picture.width)
