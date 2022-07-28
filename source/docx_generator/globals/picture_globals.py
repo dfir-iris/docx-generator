@@ -95,18 +95,47 @@ class PictureGlobals(object):
 
         :return: docxtpl.Subdoc
         """
-        incorrect_path_pattern = r'\.\.'
+        if not os.path.isdir(self._output_path):
+            os.mkdir(self._output_path)
 
+        image_path = self._process_remote(image_path)
+        return self._process_local(image_path, position)
+
+    def _process_remote(self, image_path: str) -> str:
+        """
+        Download the image to a local path and return the full path to the image file.
+        If it's not a remote file, just return the image_path to process it further
+        """
+        if image_path[:4] != 'http':
+            return os.path.abspath(os.path.join(self._base_path, image_path))
+
+        file_name = os.path.join(self._output_path, str(uuid.uuid4())) + os.path.splitext(image_path)[1]
+        try:
+            res = requests.get(image_path, stream = True)
+            if res.status_code == 200:
+                with open(file_name,'wb') as f:
+                    shutil.copyfileobj(res.raw, f)
+                self._logger.debug('Image downloaded: {} to {}'.format(image_path, file_name))
+            else:
+                raise RenderingError(self._logger, 'Image could not be downloaded, status {}: {}'.format(res.status_code, image_path))
+        except Exception as e:
+            raise RenderingError(self._logger, e.__str__())
+
+        return file_name
+
+    def _process_local(self, image_path: str, position: str = 'CENTER') -> Subdoc:
+        """
+        Process the image as a locally stored file.
+        """
+        incorrect_path_pattern = r'\.\.'
         if len(re.findall(incorrect_path_pattern, image_path)) > 0:
             raise RenderingError(self._logger, 'Invalid filename provided')
 
-        full_image_path = os.path.abspath(os.path.join(self._base_path, image_path))
-
-        if not os.path.isfile(full_image_path):
-            raise RenderingError(self._logger, 'The path provided is not a correct file', 'The path provided is not a correct file: {}'.format(full_image_path))
+        if not os.path.isfile(image_path):
+            raise RenderingError(self._logger, 'The path provided is not a correct file', 'The path provided is not a correct file: {}'.format(image_path))
 
         try:
-            return_value = self._process_image(position, full_image_path)
+            return_value = self._process_image(position, image_path)
             return return_value
         except Exception as e:
             raise RenderingError(self._logger, e.__str__())
