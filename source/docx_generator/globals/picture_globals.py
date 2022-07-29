@@ -67,7 +67,12 @@ class PictureGlobals(object):
         last_section = sub_document.sections[-1]
         page_width = last_section.page_width - last_section.left_margin - last_section.right_margin
 
-        picture = sub_document.add_picture(image_filename)
+        try:
+            picture = sub_document.add_picture(image_filename)
+        except Exception as e:
+            self._logger.debug('Error while adding image {}: {}'.format(image_filename, e.__str__()))
+            self._logger.debug('There is a problem sometimes with JPEG-Files and EXIF-Headers, try a PNG instead')
+            raise RenderingError(self._logger, 'Image could not be added (try PNG instead of JPEG): {}'.format(image_filename))
 
         # Scale picture to page dimension if width is bigger than page width
         if picture.width > page_width:
