@@ -16,7 +16,7 @@ _BEGIN_STYLE = re.compile(r'##\s*begin\s*style\s*(\w+)\s*##', re.IGNORECASE)
 _END_STYLE = re.compile(r'##\s*end\s*style\s*##', re.IGNORECASE)
 _TAG_STYLE = re.compile(r'##\s*(\w+)\s*##', re.IGNORECASE)
 
-PARAGRAPH_STYLE_TAGS = {'ul', 'ol', 'paragraph', 'code', 'quote', 'image_caption'}
+PARAGRAPH_STYLE_TAGS = {'ul', 'ol', 'paragraph', 'code', 'quote', 'image_caption', 'header1', 'header2', 'header3', 'header4', 'header5'}
 RAW_STYLE_TAGS = {'hyperlink', 'strong', 'italic', 'strike', 'inline_code'}
 TABLE_STYLE_TAGS = {'table', }
 
@@ -24,6 +24,12 @@ TABLE_STYLE_TAGS = {'table', }
 class DocxStyleAdapter:
     name: AnyStr
     _warnings: Set
+
+    header1: AnyStr
+    header2: AnyStr
+    header3: AnyStr
+    header4: AnyStr
+    header5: AnyStr
 
     ul: AnyStr
     ol: AnyStr
@@ -41,6 +47,11 @@ class DocxStyleAdapter:
     table: AnyStr
 
     _data = dict(
+        header1=None,
+        header2=None,
+        header3=None,
+        header4=None,
+        header5=None,
         ul=None,
         ol=None,
         paragraph=None,

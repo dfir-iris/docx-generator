@@ -3,6 +3,7 @@ Taken and adapted from Sarna Tool
 https://github.com/rsrdesarrollo/sarna
 """
 import logging
+import re
 
 from docxtpl import DocxTemplate
 from mistletoe.base_renderer import BaseRenderer
@@ -11,6 +12,7 @@ from docx_generator.adapters.docx.docx_adapter import make_run, escape_url, make
     make_table, make_table_row, make_table_cell, make_hyperlink_run
 from docx_generator.adapters.docx.style_adapter import DocxStyleAdapter
 from docx_generator.adapters.logging_adapter import debug_token_rendering
+from docx_generator.globals.picture_globals import PictureGlobals
 
 
 class DocxRenderer(BaseRenderer):
@@ -23,10 +25,11 @@ class DocxRenderer(BaseRenderer):
         self.warnings = set()
         return self
 
-    def __init__(self, docx: DocxTemplate):
+    def __init__(self, docx: DocxTemplate, image_handler: PictureGlobals = None):
         self.warnings = set()
         self.style = None
         self._template = docx
+        self._image_handler = image_handler
         self._suppress_ptag_stack = [False]
         self._suppress_rtag_stack = [False]
         self._list_style_stack = []
@@ -63,14 +66,20 @@ class DocxRenderer(BaseRenderer):
     def render_strikethrough(self, token):
         return self._render_standard_run(token, 'strike')
 
-    @debug_token_rendering('Rendering Image. NOT IMPLEMENTED.')
+    @debug_token_rendering('Rendering Image.')
     def render_image(self, token):
-        self.warnings.add('Markdown image is not implemented. It will be ignored')
+        if self._image_handler != None:
+            self._image_handler.set_template(self._template)
+            image = self._image_handler.add_picture(token.src)
+            return str(image)
         return ''
 
     @debug_token_rendering('Rendering Link.')
     def render_link(self, token):
         target = escape_url(token.target)
+
+        for child in token.children:
+            child.content = re.sub(r'<.*?>', '', child.content).strip()
 
         self._suppress_rtag_stack.append(True)
         inner = self.render_inner(token)
@@ -87,10 +96,10 @@ class DocxRenderer(BaseRenderer):
         else:
             return make_run('', text)
 
-    @debug_token_rendering('Rendering Heading. NOT IMPLEMENTED.')
+    @debug_token_rendering('Rendering Heading.')
     def render_heading(self, token):
-        self.warnings.add('Markdown Headings are not implemented yet. It will be ignored')
-        return ''
+        style = getattr(self.style, 'header' + str(token.level))
+        return make_paragraph(style, self.render_inner(token))
 
     @debug_token_rendering('Rendering Paragraph.')
     def render_paragraph(self, token):
