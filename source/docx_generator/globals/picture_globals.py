@@ -36,7 +36,7 @@ class PictureGlobals(object):
     def __init__(self, template: DocxTemplate, base_path: str):
         self._template = template
         self._base_path = base_path
-        self._output_path = None
+        self._output_path = os.path.join(base_path, 'tmp', 'images')
 
         self._available_alignment_values = []
         for member in WD_PARAGRAPH_ALIGNMENT.__members__:

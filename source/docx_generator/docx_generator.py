@@ -76,7 +76,7 @@ class DocxGenerator(object):
         jinja2_custom_globals = Globals(base_path, template, jinja2_environment)
 
         jinja2_custom_filters.set_available_filters()
-        jinja2_custom_globals.set_available_globals(self._image_handler)
+        jinja2_custom_globals.set_available_globals()
 
     def _recursive_rendering(self, base_path: str, template_path: str, data: Dict, output_path: str, render_level: int):
         render_level += 1
