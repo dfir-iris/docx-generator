@@ -25,6 +25,7 @@ import requests
 import shutil
 import uuid
 
+import urllib3.connection
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docxtpl import DocxTemplate, Subdoc
 
@@ -103,7 +104,12 @@ class PictureGlobals(object):
         if not os.path.isdir(self._output_path):
             os.mkdir(self._output_path)
 
-        image_path = self._process_remote(image_path)
+        try:
+            image_path = self._process_remote(image_path)
+        except Exception:
+            self._logger.error(f'Skipping {image_path} due to error')
+            return self._template.new_subdoc()
+
         return self._process_local(image_path, position)
 
     def _process_remote(self, image_path: str) -> str:
@@ -116,13 +122,15 @@ class PictureGlobals(object):
 
         file_name = os.path.join(self._output_path, str(uuid.uuid4())) + os.path.splitext(image_path)[1]
         try:
-            res = requests.get(image_path, stream = True)
+
+            res = requests.get(image_path, stream=True, timeout=2)
             if res.status_code == 200:
                 with open(file_name, 'wb') as f:
                     shutil.copyfileobj(res.raw, f)
                 self._logger.debug('Image downloaded: {} to {}'.format(image_path, file_name))
             else:
                 raise RenderingError(self._logger, 'Image could not be downloaded, status {}: {}'.format(res.status_code, image_path))
+
         except Exception as e:
             raise RenderingError(self._logger, e.__str__())
 
