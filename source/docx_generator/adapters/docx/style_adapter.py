@@ -152,6 +152,7 @@ def get_document_render_styles(doc_path) -> RenderStylesCollection:
             match = _BEGIN_STYLE.match(element.text)
             if match:
                 style_name = match.group(1)
+
         else:
             if isinstance(element, Table):
                 attrs['table'] = element._tblPr.xml

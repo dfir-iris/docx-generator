@@ -26,7 +26,7 @@ from typing import Dict
 from docxtpl import DocxTemplate
 from jinja2 import Environment
 
-from docx_generator.adapters.docx.style_adapter import RenderStylesCollection, get_document_render_styles
+from docx_generator.adapters.docx.style_adapter import RenderStylesCollection, get_document_render_styles, _BEGIN_STYLE, _END_STYLE, _TAG_STYLE
 from docx_generator.adapters.mistletoe.DocxRenderer import DocxRenderer
 from docx_generator.exceptions.rendering_error import RenderingError
 from docx_generator.filters.filters import Filters
@@ -40,13 +40,18 @@ def _sanitize_path(path: str) -> str:
 
 
 class DocxGenerator(object):
-    def __init__(self, logger_mode: str = 'INFO', max_recursive_render_depth: int = 5, image_handler: PictureGlobals = None):
-        logging.basicConfig(
-            format='%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s',
-            level=getattr(logging, logger_mode, logging.INFO)
-        )
+    def __init__(self, logger_mode: str = 'INFO', max_recursive_render_depth: int = 5,
+                 image_handler: PictureGlobals = None, app_logger: logging = None):
 
-        self._logger = logging.getLogger(__name__)
+        if app_logger is None:
+            logging.basicConfig(
+                format='%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s',
+                level=getattr(logging, logger_mode, logging.INFO)
+            )
+
+            self._logger = logging.getLogger(__name__)
+        else:
+            self._logger = app_logger
 
         self._max_recursive_render_depth = max_recursive_render_depth
         self._image_handler = image_handler

@@ -118,7 +118,7 @@ class PictureGlobals(object):
         try:
             res = requests.get(image_path, stream = True)
             if res.status_code == 200:
-                with open(file_name,'wb') as f:
+                with open(file_name, 'wb') as f:
                     shutil.copyfileobj(res.raw, f)
                 self._logger.debug('Image downloaded: {} to {}'.format(image_path, file_name))
             else:
