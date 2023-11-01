@@ -21,15 +21,15 @@
 import logging
 import os
 import re
-import requests
 import shutil
 import uuid
 
-import urllib3.connection
+import requests
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docxtpl import DocxTemplate, Subdoc
 
 from docx_generator.adapters.file_adapter import recover_file_path_from_uuid
+from docx_generator.utils import resize_image, get_available_paragraph_alignments
 from docx_generator.exceptions.rendering_error import RenderingError
 
 
@@ -38,10 +38,6 @@ class PictureGlobals(object):
         self._template = template
         self._base_path = base_path
         self._output_path = os.path.join(base_path, 'tmp', 'images')
-
-        self._available_alignment_values = []
-        for member in WD_PARAGRAPH_ALIGNMENT.__members__:
-            self._available_alignment_values.append(member.name)
 
         self._logger = logging.getLogger(__name__)
 
@@ -53,14 +49,6 @@ class PictureGlobals(object):
 
     def set_output_path(self, output_path: str):
         self._output_path = output_path
-
-    def _scale_picture(self, picture, new_width):
-        aspect_ratio = float(picture.height) / float(picture.width)
-
-        picture.width = new_width
-        picture.height = int(aspect_ratio * new_width)
-
-        self._logger.debug('... Picture rescaling ...')
 
     def _process_image(self, position, image_filename: str) -> Subdoc:
         sub_document = self._template.new_subdoc()
@@ -77,9 +65,10 @@ class PictureGlobals(object):
 
         # Scale picture to page dimension if width is bigger than page width
         if picture.width > page_width:
-            self._scale_picture(picture, page_width)
+            resize_image(picture, page_width)
+            self._logger.info(f"Image resized - {image_filename}")
 
-        if position in self._available_alignment_values:
+        if position in get_available_paragraph_alignments():
             last_paragraph = sub_document.paragraphs[-1]
             last_paragraph.alignment = getattr(WD_PARAGRAPH_ALIGNMENT, position)
 

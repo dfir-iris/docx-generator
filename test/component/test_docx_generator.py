@@ -17,13 +17,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import json
 import os
 import re
 from unittest import TestCase
 
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
 from docx.opc.constants import RELATIONSHIP_TYPE
+from docx.styles.styles import Styles
 
 from docx_generator.docx_generator import DocxGenerator
 from docx_generator.exceptions.rendering_error import RenderingError
@@ -48,7 +50,8 @@ class TestDocxGenerator(TestCase):
             'hyperlink_global_result': 'hyperlink_global_result.docx',
             'non_existent_global_result': 'non_existent_global_result.docx',
             'non_existent_filter_result': 'non_existent_filter_result.docx',
-            'unclosed_jinja_control_tag_result': 'unclosed_jinja_control_tag_result.docx'
+            'unclosed_jinja_control_tag_result': 'unclosed_jinja_control_tag_result.docx',
+            'richtext_result': 'richtext_result.docx'
         }
 
         self._subject = DocxGenerator(logger_mode='DEBUG')
@@ -197,6 +200,7 @@ class TestDocxGenerator(TestCase):
             data,
             os.path.join(self._results_path, self._output_filenames['markdown_filter_template_result'])
         )
+
     def test_should_not_fail_with_specific_markdown(self):
         markdown_text = '***possibly an error***'
 
@@ -296,3 +300,157 @@ class TestDocxGenerator(TestCase):
                 data,
                 os.path.join(self._results_path, self._output_filenames['unclosed_jinja_control_tag_result'])
             )
+
+    def test_should_generate_docx_with_richtext(self):
+        richtext_content = [
+            {
+                "type": "heading-1",
+                "children": [
+                    {"text": "This is a test for Richtext"}
+                ]
+            },
+            {
+                "type": "paragraph",
+                "children": [
+                    {"text": "Test "},
+                    {"text": "with bold, ", "bold": True},
+                    {"text": "with italic and underline", "italic": True, "underline": True}
+                ]
+            },
+            {"type": "paragraph", "children": []},
+            {
+                "type": "paragraph",
+                "align": "center",
+                "children": [
+                    {"text": "code example Lli", "code": True}
+                ]
+            },
+            {"type": "caption", "text": "This is the figure caption 1"},
+            {"type": "paragraph", "children": []},
+            {"type": "image-uuid", "image_uuid": "5bacc2bc-5b90-4c47-93d7-d9291911c4b3"},
+            {"type": "block-quote", "children": [{"text": "This is a test for Block Quote"}]},
+            {"type": "block-quote", "children": [{"text": "With multiple lines"}]},
+            {"type": "bulleted-list", "children": [
+                {"type": "list-item", "children": [{"text": "Item1"}]},
+                {"type": "list-item", "children": [{"text": "Item1.2"}]}
+            ]},
+            {"type": "paragraph", "children": []},
+            {"type": "numbered-list", "children": [
+                {"type": "list-item", "children": [{"text": "AAA"}]},
+                {"type": "list-item", "children": [{"text": "BBB"}]}
+            ]},
+            {"type": "paragraph", "children": []},
+            {
+                "type": "paragraph",
+                "align": "center",
+                "children": [
+                    {"text": "Separation between two lists"}
+                ]
+            },
+            {"type": "paragraph", "children": []},
+            {"type": "numbered-list", "children": [
+                {"type": "list-item", "children": [{"text": "CCC"}]},
+                {"type": "list-item", "children": [{"text": "DDD"}]}
+            ]},
+            {"type": "paragraph", "children": []},
+            {
+                "type": "table",
+                "children": [
+                    {
+                        "type": "table-row",
+                        "children": [
+                            {
+                                "type": "table-cell",
+                                "children": [
+                                    {
+                                        "type": "paragraph",
+                                        "children": [
+                                            {
+                                                "text": "aa"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "table-cell",
+                                "children": [
+                                    {
+                                        "type": "paragraph",
+                                        "children": [
+                                            {
+                                                "text": "bb"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "table-row",
+                        "children": [
+                            {
+                                "type": "table-cell",
+                                "children": [
+                                    {
+                                        "type": "paragraph",
+                                        "children": [
+                                            {
+                                                "text": "cc"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "table-cell",
+                                "children": [
+                                    {
+                                        "type": "paragraph",
+                                        "children": [
+                                            {
+                                                "text": "dd"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {"type": "caption", "text": "This is the figure caption 2"},
+        ]
+
+        data = {
+            'value': json.dumps(richtext_content)
+        }
+
+        styles = self._subject.get_available_styles(self._base_path, os.path.join(self._template_path, 'richtext_global_template.docx'))
+        # for style in styles:
+        #     print(style.get('name'), style.get('id'))
+
+        self._subject.generate_docx(
+            self._base_path,
+            os.path.join(self._template_path, 'richtext_global_template.docx'),
+            data,
+            os.path.join(self._results_path, self._output_filenames['richtext_result']),
+            {
+                "heading-1": "Heading1",
+                "heading-2": "Heading2",
+                "heading-3": "Heading3",
+                "heading-4": "Heading4",
+                "heading-5": "Heading5",
+                "heading-6": "Heading6",
+                "block-quote": "BlockQuote",
+                "block-code": "BlockCode",
+                "numbered-list": "APNumbered",
+                "bulleted-list": "APBulleted",
+                "caption": "Caption"
+            }
+        )
+
+        result_file = Document(os.path.join(self._results_path, self._output_filenames['richtext_result']))
+
+        self.assertTrue(False)
