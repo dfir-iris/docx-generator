@@ -17,9 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import hashlib
 import json
 import logging
 from json import JSONDecodeError
+from logging import Logger
 from typing import Dict, Any, Union
 
 from docx.document import Document
@@ -28,13 +30,30 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.table import _Cell
 from docx.text.paragraph import Paragraph
-from docxtpl import DocxTemplate, RichText
+from docxtpl import DocxTemplate, RichText, Subdoc
 from jinja2 import Environment
 
 from docx_generator.adapters.file_adapter import recover_file_path_from_uuid
 from docx_generator.globals.document_globals import DocumentGlobals
 from docx_generator.globals.picture_globals import PictureGlobals
 from docx_generator.utils import resize_image, get_available_paragraph_alignments
+
+
+def rendering_decorator(logger: Logger, log_identifier: str, log_start_message: str, log_error_message: str):
+    def decorate(func):
+        def call():
+            logger.debug(f"{log_identifier} [+] {log_start_message}")
+
+            try:
+                return func()
+            except Exception as e:
+                logger.error(f"{log_identifier} - {log_error_message}")
+                logger.debug(f"{log_identifier} - Rendering error: {e.__str__()}")
+                return None
+
+        return call
+
+    return decorate
 
 
 class Globals(object):
@@ -63,13 +82,33 @@ class Globals(object):
 
         return rt
 
-    def _richtext_to_docx(self, richtext: str):
-        # loads of richtext to generate the corresponding JSON.
-        # Iterate over the different elements and their children
-        # See how to manage multiple styling -> separate between blocks and marks to be able to add multiple marks --> bold + italic for example.
-        # Document everything thoroughly
-        sub_document_template_element = self._template.new_subdoc()
+    def _richtext_to_docx(self, richtext: str) -> Subdoc:
+        """
+        Converts JSON-string data following the SlateJS WYSIWYG editor data "format" to docx format (https://docs.slatejs.org/).
+        
+        Uses the style map passed as a parameter of the generate_docx method to map the different node types to their corresponding docx styles.
+        
+        Most node types are processed as paragraphs to which an eponymous style is attached.
+        The following styles however have custom rendering processes:
+        
+        * image-uuid
+        * caption
+        * bulleted-list
+        * numbered-list
+        * table
 
+        The rendering process only allows list with 1 level at the moment.
+        
+        Parameters
+        ----------
+        richtext : str
+
+        """
+        # What will happen if very large data ?
+        logging_identifier = hashlib.sha1(str.encode(richtext)).hexdigest()
+        self._logger.info(f"{logging_identifier} - Starting RichText rendering")
+
+        sub_document_template_element = self._template.new_subdoc()
         sub_document_docx_element = sub_document_template_element.subdocx  # type: Document
 
         last_section = sub_document_docx_element.sections[-1]
@@ -78,6 +117,7 @@ class Globals(object):
         try:
             json_node_data = json.loads(richtext)
         except JSONDecodeError:
+            self._logger.error(f"{logging_identifier} - An error occurred during loading data into JSON")
             json_node_data = [
                 {
                     "type": 'paragraph',
@@ -86,6 +126,7 @@ class Globals(object):
             ]
 
         def _list_number(doc: Document, par: Paragraph, prev: Paragraph = None, level=None, num=True):
+            # Taken from https://github.com/python-openxml/python-docx/issues/25
             """
             Makes a paragraph into a list item with a specific level and
             optional restart.
@@ -184,7 +225,7 @@ class Globals(object):
             par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_numId().val = num
             par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
 
-        def _add_caption_paragraph():
+        def _process_caption_node():
             # caption type
             paragraph = sub_document_docx_element.add_paragraph('Figure ')
 
@@ -209,91 +250,115 @@ class Globals(object):
             return paragraph
 
         def _process_child(child_element: Dict[str, Any], parent_element: Union[Paragraph, _Cell] = None, forced_style: str = None):
-            """
-            Possible node types :
-            * paragraph (default) - ok
-            * block-quote - ok
-            * block-code - ok
-            * bulleted-list - ok
-            * numbered-list - ok
-            * list-item - ok
-            * image-uuid - ok
-            * image - ko
-            * table - ok
-            * table-row - ok
-            * table-cell - ok
-            * caption - ok
-            * heading-1 - ok
-            * heading-2 - ok
-            * heading-3 - ok
-            * heading-4 - ok
-            * heading-5 - ok
-            * heading-6 - ok
-            """
             node_type = child_element.get('type')
 
             if node_type is not None:
                 node_children = child_element.get('children', [{"text": "An error occurred while parsing children"}])
                 if node_type == 'image-uuid':
-                    new_image_paragraph = sub_document_docx_element.add_paragraph()
-                    new_image_run = new_image_paragraph.add_run()
-                    image_element = new_image_run.add_picture(recover_file_path_from_uuid(self._logger, 'Picture', self._base_path, child_element.get('image_uuid')))
-                    if image_element.width > page_width:
-                        resize_image(image_element, page_width)
 
-                    return new_image_paragraph
+                    @rendering_decorator(self._logger, logging_identifier, 'Rendering image from uuid', 'An error occurred during image rendering from uuid')
+                    def _render_image_from_uuid():
+                        new_image_paragraph = sub_document_docx_element.add_paragraph()
+                        new_image_run = new_image_paragraph.add_run()
+                        image_element = new_image_run.add_picture(recover_file_path_from_uuid(self._logger, 'Picture', self._base_path, child_element.get('image_uuid')))
+                        if image_element.width > page_width:
+                            resize_image(image_element, page_width)
+
+                        return new_image_paragraph
+
+                    return _render_image_from_uuid()
+
                 elif node_type == 'image':
-                    self._logger.info('image node type not implemented yet')
+                    # Should be able to load images directly using a valid URL
+                    self._logger.warning('f"{logging_identifier} - Image node type not available at the moment"')
 
                     return None
+
                 elif node_type == 'caption':
-                    new_paragraph = _add_caption_paragraph()
-                    _process_text(new_paragraph, {"text": child_element.get('text', 'N/A')})
+
+                    @rendering_decorator(self._logger, logging_identifier, 'Rendering caption', 'An error occurred during caption rendering')
+                    def _render_caption():
+                        new_caption_paragraph = _process_caption_node()
+                        _process_text(new_caption_paragraph, {"text": child_element.get('text', 'N/A')})
+                        return new_caption_paragraph
+
+                    return _render_caption()
+
                 elif node_type == 'numbered-list':
-                    new_forced_style = self._style_mapper.get(node_type)
-                    previous_child = None
-                    for node_child in node_children:
-                        new_child = _process_child(node_child, forced_style=new_forced_style)
-                        _list_number(sub_document_docx_element, new_child, previous_child, num=True)
-                        previous_child = new_child
+
+                    @rendering_decorator(self._logger, logging_identifier, 'Rendering numbered list', 'An error occurred during numbered list rendering')
+                    def _render_numbered_list():
+                        new_forced_style = self._style_mapper.get(node_type)
+                        previous_child = None
+                        for node_child in node_children:
+                            new_child = _process_child(node_child, forced_style=new_forced_style)
+                            _list_number(sub_document_docx_element, new_child, previous_child, num=True)
+                            previous_child = new_child
+                        return None
+
+                    return _render_numbered_list()
+
                 elif node_type == 'bulleted-list':
-                    new_forced_style = self._style_mapper.get(node_type)
-                    for node_child in node_children:
-                        _process_child(node_child, forced_style=new_forced_style)
+
+                    @rendering_decorator(self._logger, logging_identifier, 'Rendering bulleted list', 'An error occurred during bulleted list rendering')
+                    def _render_bulleted_list():
+                        new_forced_style = self._style_mapper.get(node_type)
+                        for node_child in node_children:
+                            _process_child(node_child, forced_style=new_forced_style)
+                        return None
+
+                    return _render_bulleted_list()
+
                 elif node_type == 'table':
-                    table_rows = [row for row in node_children if row.get('type') == 'table-row']
-                    nb_table_rows = len(table_rows)
-                    nb_table_cells_max = max([len([cell for cell in row.get('children', []) if cell.get('type') == 'table-cell']) for row in table_rows])
 
-                    new_table = sub_document_docx_element.add_table(nb_table_rows, nb_table_cells_max)
-                    for index_row, row_child in enumerate(table_rows):
-                        for index_cell, cell_element in enumerate([cell for cell in row_child.get('children') if cell.get('type') == 'table-cell']):
-                            considered_cell = new_table.cell(index_row, index_cell)  # type: _Cell
-                            for cell_child in cell_element.get('children', []):
-                                _process_child(cell_child, parent_element=considered_cell)
+                    @rendering_decorator(self._logger, logging_identifier, 'Rendering table', 'An error occurred during table rendering')
+                    def _render_table():
+                        table_rows = [row for row in node_children if row.get('type') == 'table-row']
+                        nb_table_rows = len(table_rows)
+                        nb_table_cells_max = max([len([cell for cell in row.get('children', []) if cell.get('type') == 'table-cell']) for row in table_rows])
+
+                        new_table = sub_document_docx_element.add_table(nb_table_rows, nb_table_cells_max)
+                        for index_row, row_child in enumerate(table_rows):
+                            self._logger.debug(f"{logging_identifier}     [+] Processing table row")
+                            for index_cell, cell_element in enumerate([cell for cell in row_child.get('children') if cell.get('type') == 'table-cell']):
+                                self._logger.debug(f"{logging_identifier}         [+] Processing table cell")
+                                considered_cell = new_table.cell(index_row, index_cell)  # type: _Cell
+                                for cell_child in cell_element.get('children', []):
+                                    _process_child(cell_child, parent_element=considered_cell)
+
+                        return new_table
+
+                    return _render_table()
+
                 else:
-                    if parent_element:
-                        new_paragraph = parent_element.add_paragraph()
-                    else:
-                        new_paragraph = sub_document_docx_element.add_paragraph()
 
-                    new_paragraph.style = forced_style if forced_style is not None else self._style_mapper.get(node_type)
-
-                    child_element_alignment = child_element.get('align', 'left').upper()
-                    if child_element_alignment in get_available_paragraph_alignments():
-                        new_paragraph.alignment = getattr(WD_PARAGRAPH_ALIGNMENT, child_element_alignment)
-
-                    new_forced_style = None
-
-                    for index_child, paragraph_child in enumerate(node_children):
-                        if paragraph_child.get('text') is not None:
-                            _process_text(new_paragraph, paragraph_child)
+                    @rendering_decorator(self._logger, logging_identifier, f'Rendering {node_type}', f'An error occurred during {node_type} rendering')
+                    def _render_node():
+                        if parent_element:
+                            new_paragraph = parent_element.add_paragraph()
                         else:
-                            _process_child(paragraph_child, forced_style=new_forced_style)
+                            new_paragraph = sub_document_docx_element.add_paragraph()
 
-                    return new_paragraph
+                        new_paragraph.style = forced_style if forced_style is not None else self._style_mapper.get(node_type)
+
+                        child_element_alignment = child_element.get('align', 'left').upper()
+                        if child_element_alignment in get_available_paragraph_alignments():
+                            new_paragraph.alignment = getattr(WD_PARAGRAPH_ALIGNMENT, child_element_alignment)
+
+                        new_forced_style = None
+
+                        for index_child, paragraph_child in enumerate(node_children):
+                            if paragraph_child.get('text') is not None:
+                                _process_text(new_paragraph, paragraph_child)
+                            else:
+                                _process_child(paragraph_child, forced_style=new_forced_style)
+
+                        return new_paragraph
+
+                    return _render_node()
 
         def _process_text(parent_element, text_object: Dict[str, Any]):
+            self._logger.debug(f"{logging_identifier} |___ [+] Rendering text value")
             new_run = parent_element.add_run(text_object.get('text', ''))
 
             font_element = new_run.font

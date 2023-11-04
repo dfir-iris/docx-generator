@@ -427,6 +427,8 @@ class TestDocxGenerator(TestCase):
             'value': json.dumps(richtext_content)
         }
 
+        print(json.dumps(richtext_content))
+
         styles = self._subject.get_available_styles(self._base_path, os.path.join(self._template_path, 'richtext_global_template.docx'))
         # for style in styles:
         #     print(style.get('name'), style.get('id'))
