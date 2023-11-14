@@ -82,14 +82,31 @@ class DocxGenerator(object):
             self._logger.info('Output directory located: {}'.format(full_output_path))
         return full_output_path
 
-    def _set_jinja2_custom_environment(self, base_path: str, template: DocxTemplate, style_mapper: Dict[str, str], jinja2_environment: Environment, renderer: DocxRenderer, template_styles: RenderStylesCollection) -> None:
+    def _process_image_directory_path(self, base_path: str, image_directory_path: str) -> str:
+        if image_directory_path is None:
+            image_directory_path = os.path.join('tmp', 'images')
+
+        full_image_directory_path = os.path.join(base_path, image_directory_path)
+
+        try:
+            if not os.path.isdir(full_image_directory_path):
+                os.mkdir(full_image_directory_path)
+
+            return full_image_directory_path
+        except Exception as e:
+            self._logger.critical("Impossible to create temporary image directory")
+            self._logger.debug(f"Image directory error: {e.__str__()}")
+            raise RenderingError(self._logger, 'Image directory path passed to the generator is not valid')
+
+    @staticmethod
+    def _set_jinja2_custom_environment(base_path: str, output_path: str, image_directory_path: str, template: DocxTemplate, style_mapper: Dict[str, str], jinja2_environment: Environment, renderer: DocxRenderer, template_styles: RenderStylesCollection) -> None:
         jinja2_custom_filters = Filters(renderer, template_styles, jinja2_environment)
-        jinja2_custom_globals = Globals(base_path, template, style_mapper, jinja2_environment)
+        jinja2_custom_globals = Globals(base_path, output_path, image_directory_path, template, style_mapper, jinja2_environment)
 
         jinja2_custom_filters.set_available_filters()
         jinja2_custom_globals.set_available_globals()
 
-    def _recursive_rendering(self, base_path: str, template_path: str, style_mapper: Dict[str, str], data: Dict, output_path: str, render_level: int):
+    def _recursive_rendering(self, base_path: str, template_path: str, style_mapper: Dict[str, str], data: Dict, output_path: str, image_directory_path: str, render_level: int):
         render_level += 1
         self._logger.info('Start rendering for level {}'.format(render_level))
 
@@ -100,7 +117,7 @@ class DocxGenerator(object):
 
         jinja_custom_environment = Environment()
 
-        self._set_jinja2_custom_environment(base_path, loaded_template, style_mapper, jinja_custom_environment, docx_renderer, template_styles)
+        self._set_jinja2_custom_environment(base_path, output_path, image_directory_path, loaded_template, style_mapper, jinja_custom_environment, docx_renderer, template_styles)
 
         try:
             loaded_template.render(data, jinja_env=jinja_custom_environment, autoescape=True)
@@ -140,19 +157,20 @@ class DocxGenerator(object):
         template_path and absolute_path must be relative to base_path
     """
 
-    def generate_docx(self, base_path: str, template_path: str, data: Dict, output_path: str, style_mapper: Dict[str, str] = None):
+    def generate_docx(self, base_path: str, template_path: str, data: Dict, output_path: str, style_mapper: Dict[str, str] = None, image_directory_path: str = None):
         processed_base_path = os.path.abspath(base_path)
         full_template_path = self._process_template_path(processed_base_path, template_path)
         full_output_path = self._process_output_path(processed_base_path, output_path)
+        full_image_directory_path = self._process_image_directory_path(processed_base_path, image_directory_path)
 
         style_mapper = {} if style_mapper is None else style_mapper
 
-        if self._image_handler != None:
+        if self._image_handler is not None:
             self._image_handler.set_base_path(processed_base_path)
-            self._image_handler.set_output_path(os.path.join(os.path.dirname(full_output_path), "images"))
+            self._image_handler.set_image_directory_path(os.path.join(os.path.dirname(full_output_path), "images"))
 
         self._logger.info('Starting new report generation. Base path: {}. Template path: {}. Output path'.format(processed_base_path, full_template_path, full_output_path))
-        self._recursive_rendering(processed_base_path, full_template_path, style_mapper, data, full_output_path, 0)
+        self._recursive_rendering(processed_base_path, full_template_path, style_mapper, data, full_output_path, full_image_directory_path, 0)
 
     def get_available_styles(self, base_path: str, template_path: str) -> List[Dict[str, str]]:
         processed_base_path = os.path.abspath(base_path)

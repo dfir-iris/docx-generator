@@ -21,23 +21,22 @@
 import logging
 import os
 import re
-import shutil
-import uuid
 
-import requests
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docxtpl import DocxTemplate, Subdoc
 
 from docx_generator.adapters.file_adapter import recover_file_path_from_uuid
-from docx_generator.utils import resize_image, get_available_paragraph_alignments
 from docx_generator.exceptions.rendering_error import RenderingError
+from docx_generator.utils import resize_image, get_available_paragraph_alignments
+from docx_generator.globals.utils import retrieve_remote_file
 
 
 class PictureGlobals(object):
-    def __init__(self, template: DocxTemplate, base_path: str):
+    def __init__(self, template: DocxTemplate, base_path: str, image_directory_path: str):
         self._template = template
         self._base_path = base_path
-        self._output_path = os.path.join(base_path, 'tmp', 'images')
+
+        self._image_directory_path = image_directory_path
 
         self._logger = logging.getLogger(__name__)
 
@@ -47,8 +46,16 @@ class PictureGlobals(object):
     def set_base_path(self, base_path: str):
         self._base_path = base_path
 
-    def set_output_path(self, output_path: str):
-        self._output_path = output_path
+    def set_image_directory_path(self, output_path: str):
+        try:
+            if not os.path.isdir(output_path):
+                os.mkdir(output_path)
+
+            return output_path
+        except Exception as e:
+            self._logger.critical("Impossible to create temporary image directory")
+            self._logger.debug(f"Image directory error: {e.__str__()}")
+            return None
 
     def _process_image(self, position, image_filename: str) -> Subdoc:
         sub_document = self._template.new_subdoc()
@@ -90,40 +97,14 @@ class PictureGlobals(object):
 
         :return: docxtpl.Subdoc
         """
-        if not os.path.isdir(self._output_path):
-            os.mkdir(self._output_path)
 
         try:
-            image_path = self._process_remote(image_path)
+            image_path = retrieve_remote_file(image_path, self._base_path, self._image_directory_path, self._logger)
         except Exception:
             self._logger.error(f'Skipping {image_path} due to error')
             return self._template.new_subdoc()
 
         return self._process_local(image_path, position)
-
-    def _process_remote(self, image_path: str) -> str:
-        """
-        Download the image to a local path and return the full path to the image file.
-        If it's not a remote file, just return the image_path to process it further
-        """
-        if image_path[:4] != 'http':
-            return os.path.abspath(os.path.join(self._base_path, image_path))
-
-        file_name = os.path.join(self._output_path, str(uuid.uuid4())) + os.path.splitext(image_path)[1]
-        try:
-
-            res = requests.get(image_path, stream=True, timeout=2)
-            if res.status_code == 200:
-                with open(file_name, 'wb') as f:
-                    shutil.copyfileobj(res.raw, f)
-                self._logger.debug('Image downloaded: {} to {}'.format(image_path, file_name))
-            else:
-                raise RenderingError(self._logger, 'Image could not be downloaded, status {}: {}'.format(res.status_code, image_path))
-
-        except Exception as e:
-            raise RenderingError(self._logger, e.__str__())
-
-        return file_name
 
     def _process_local(self, image_path: str, position: str = 'CENTER') -> Subdoc:
         """
@@ -147,7 +128,7 @@ class PictureGlobals(object):
         Adds picture to document from special file structure. Images must be stored in a folder being named with a uuid identifying the picture. This folder must be stored directly under the bas path.
         :
         uuid:   str
-            Uuid of the picture..
+            Uuid of the picture.
             example: 466cf6e1-569d-4239-ae34-9a4d9b52fd5c
         :position:   str
             Position value used to position value in the document.
