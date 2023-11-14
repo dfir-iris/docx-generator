@@ -5,6 +5,7 @@ from logging import Logger
 from typing import Dict
 
 import requests
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 from docx_generator.exceptions.rendering_error import RenderingError
 
@@ -36,3 +37,14 @@ def retrieve_remote_file(image_path: str, base_path: str, file_storage_path: str
         raise RenderingError(logger, e.__str__())
 
     return file_name
+
+
+def resize_image(image, new_width):
+    aspect_ratio = float(image.height) / float(image.width)
+
+    image.width = new_width
+    image.height = int(aspect_ratio * new_width)
+
+
+def get_available_paragraph_alignments():
+    return list(WD_PARAGRAPH_ALIGNMENT.__members__.keys())

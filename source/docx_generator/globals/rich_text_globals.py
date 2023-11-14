@@ -14,8 +14,7 @@ from docx.text.paragraph import Paragraph
 from docxtpl import Subdoc, DocxTemplate
 
 from docx_generator.adapters.file_adapter import recover_file_path_from_uuid
-from docx_generator.globals.utils import retrieve_remote_file
-from docx_generator.utils import get_available_paragraph_alignments, resize_image
+from docx_generator.globals.utils import retrieve_remote_file, resize_image, get_available_paragraph_alignments
 
 
 def rendering_decorator(logger: Logger, log_identifier: str, log_start_message: str, log_error_message: str):
@@ -181,10 +180,7 @@ class RichTextGlobals(object):
 
         The rendering process only allows list with 1 level at the moment.
 
-        Parameters
-        ----------
-        richtext : str
-
+        :param richtext: str
         """
         # What will happen if very large data ?
         logging_identifier = hashlib.sha1(str.encode(richtext)).hexdigest()

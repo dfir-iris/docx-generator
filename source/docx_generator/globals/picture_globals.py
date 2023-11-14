@@ -27,8 +27,7 @@ from docxtpl import DocxTemplate, Subdoc
 
 from docx_generator.adapters.file_adapter import recover_file_path_from_uuid
 from docx_generator.exceptions.rendering_error import RenderingError
-from docx_generator.utils import resize_image, get_available_paragraph_alignments
-from docx_generator.globals.utils import retrieve_remote_file
+from docx_generator.globals.utils import retrieve_remote_file, resize_image, get_available_paragraph_alignments
 
 
 class PictureGlobals(object):
