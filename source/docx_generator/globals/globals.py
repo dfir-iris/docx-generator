@@ -29,13 +29,25 @@ from docx_generator.globals.rich_text_globals import RichTextGlobals
 
 
 class Globals(object):
-    def __init__(self, base_path: str, output_path: str, image_directory_path: str, template: DocxTemplate, style_mapper: Dict[str, str], jinja2_environment: Environment):
+    def __init__(
+            self,
+            base_path: str,
+            output_path: str,
+            image_directory_path: str,
+            template: DocxTemplate,
+            style_mapper: Dict[str, str],
+            jinja2_environment: Environment,
+            allow_external_download: bool,
+            proxy_settings: Dict[str, str]
+    ):
         self._base_path = base_path
         self._output_path = output_path
         self._image_directory_path = image_directory_path
         self._template = template
         self._style_mapper = style_mapper
         self._jinja2_environment = jinja2_environment
+        self._allow_external_download = allow_external_download
+        self._proxy_settings = proxy_settings
 
         self._logger = logging.getLogger(__name__)
 
@@ -65,7 +77,15 @@ class Globals(object):
 
         picture_globals = PictureGlobals(self._template, self._base_path, self._image_directory_path)
         document_globals = DocumentGlobals(self._template, self._base_path)
-        rich_text_globals = RichTextGlobals(self._template, self._base_path, self._output_path, self._image_directory_path, self._style_mapper)
+        rich_text_globals = RichTextGlobals(
+            self._template,
+            self._base_path,
+            self._output_path,
+            self._image_directory_path,
+            self._style_mapper,
+            self._allow_external_download,
+            self._proxy_settings
+        )
 
         self._jinja2_environment.globals['addPicture'] = picture_globals.add_picture
         self._jinja2_environment.globals['addPictureFromUuid'] = picture_globals.add_picture_from_uuid

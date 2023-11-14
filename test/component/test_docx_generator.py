@@ -57,7 +57,7 @@ class TestDocxGenerator(TestCase):
             'richtext_result': 'richtext_result.docx'
         }
 
-        self._subject = DocxGenerator(logger_mode='DEBUG')
+        self._subject = DocxGenerator(logger_mode='DEBUG', allow_external_download=True)
 
     def tearDown(self) -> None:
         shutil.rmtree(os.path.join(self._base_path, 'tmp', 'images'))
@@ -637,11 +637,7 @@ class TestDocxGenerator(TestCase):
         self.assertEqual('', paragraph10.text)
 
         # IMAGE 2
-        image2 = result_file_paragraphs[21]  # type: Paragraph
+        image2 = result_file_paragraphs[22]  # type: Paragraph
         image2_r1 = image2.runs[0]  # type: Run
         self.assertEqual(1, len(list(image2_r1.iter_inner_content())))
         self.assertEqual(Drawing, type(list(image2_r1.iter_inner_content())[0]))
-
-        # IMAGE 3
-
-        self.assertTrue(False)

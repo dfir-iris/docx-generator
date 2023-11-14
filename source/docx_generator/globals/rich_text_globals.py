@@ -143,7 +143,16 @@ def _process_paragraph_alignment(paragraph: Paragraph, node_data: Dict):
 
 
 class RichTextGlobals(object):
-    def __init__(self, template: DocxTemplate, base_path: str, output_path: str, image_directory_path: str, style_mapper: Dict[str, str]):
+    def __init__(
+            self,
+            template: DocxTemplate,
+            base_path: str,
+            output_path: str,
+            image_directory_path: str,
+            style_mapper: Dict[str, str],
+            allow_external_download: bool,
+            proxy_settings: Dict[str, str]
+    ):
         self._template = template
 
         self._base_path = base_path
@@ -152,6 +161,8 @@ class RichTextGlobals(object):
 
         self._style_mapper = style_mapper
         self._logger = logging.getLogger(__name__)
+        self._allow_external_download = allow_external_download
+        self._proxy_settings = proxy_settings
 
     def richtext_to_docx(self, richtext: str) -> Subdoc:
         """
@@ -243,7 +254,13 @@ class RichTextGlobals(object):
 
                     @rendering_decorator(self._logger, logging_identifier, 'Rendering image_from_path', 'An error occurred during image processing')
                     def _render_image():
-                        local_image = retrieve_remote_file(child_element.get('image_path'), self._base_path, self._image_directory_path, self._logger)
+                        local_image = retrieve_remote_file(
+                            child_element.get('image_path'),
+                            self._base_path,
+                            self._image_directory_path,
+                            self._logger,
+                            self._proxy_settings
+                        )
 
                         new_image_paragraph = sub_document_docx_element.add_paragraph()  # type: Paragraph
                         new_image_run = new_image_paragraph.add_run()
@@ -253,7 +270,11 @@ class RichTextGlobals(object):
 
                         return new_image_paragraph
 
-                    return _render_image()
+                    if self._allow_external_download:
+                        return _render_image()
+                    else:
+                        self._logger.info('Cannot download image from outside as it has not been enabled')
+                        return None
 
                 elif node_type == 'caption':
 

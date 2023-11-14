@@ -46,9 +46,28 @@ class DocxGenerator(object):
         logger_mode: str = 'INFO',
         max_recursive_render_depth: int = 5,
         image_handler: PictureGlobals = None,
-        app_logger: logging = None
+        app_logger: logging = None,
+        allow_external_download: bool = False,
+        proxy_settings: Dict[str, str] = None
     ):
-
+        """
+        :type logger_mode: Enum(DEBUG, INFO, WARNING, CRITICAL)
+        :param logger_mode: Sets the logger level
+        :type max_recursive_render_depth: integer
+        :param max_recursive_render_depth:
+            It is possible to embed Jinja2 variables inside data sent to the generator. After the document generation, the generator look for remaining variables in the generated document, and does another generation with the same data if it finds at least one. This parameter determines how many time the generator will perform this process
+        :type image_handler:
+        :param image_handler:
+        :type app_logger: Logger
+        :param app_logger:
+            If the generator is used in the context of another application, it allows to pass the application's logger so that the generator writes its logs to it.
+        :type allow_external_download: boolean
+        :param allow_external_download:
+            Used to determine if the generator can query elements externally, for example images directly from the internet.
+        :type proxy_settings: Dict
+        :param proxy_settings:
+            Used for setting HTTP and HTTPS proxy. Value should look like {'http': '__HTTP_PROXY_ADDRESS__', 'https': '__HTTPS_PROXY_ADDRESS__'}
+        """
         if app_logger is None:
             logging.basicConfig(
                 format='%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s',
@@ -61,6 +80,8 @@ class DocxGenerator(object):
 
         self._max_recursive_render_depth = max_recursive_render_depth
         self._image_handler = image_handler
+        self._allow_external_download = allow_external_download
+        self._proxy_settings = proxy_settings if proxy_settings is not None else {}
 
     def _process_template_path(self, base_path: str, template_path: str) -> str:
         template_path = _sanitize_path(template_path)
@@ -98,10 +119,17 @@ class DocxGenerator(object):
             self._logger.debug(f"Image directory error: {e.__str__()}")
             raise RenderingError(self._logger, 'Image directory path passed to the generator is not valid')
 
-    @staticmethod
-    def _set_jinja2_custom_environment(base_path: str, output_path: str, image_directory_path: str, template: DocxTemplate, style_mapper: Dict[str, str], jinja2_environment: Environment, renderer: DocxRenderer, template_styles: RenderStylesCollection) -> None:
+    def _set_jinja2_custom_environment(self, base_path: str, output_path: str, image_directory_path: str, template: DocxTemplate, style_mapper: Dict[str, str], jinja2_environment: Environment, renderer: DocxRenderer, template_styles: RenderStylesCollection) -> None:
         jinja2_custom_filters = Filters(renderer, template_styles, jinja2_environment)
-        jinja2_custom_globals = Globals(base_path, output_path, image_directory_path, template, style_mapper, jinja2_environment)
+        jinja2_custom_globals = Globals(
+            base_path,
+            output_path,
+            image_directory_path,
+            template, style_mapper,
+            jinja2_environment,
+            self._allow_external_download,
+            self._proxy_settings
+        )
 
         jinja2_custom_filters.set_available_filters()
         jinja2_custom_globals.set_available_globals()
@@ -146,7 +174,7 @@ class DocxGenerator(object):
 
         if is_variable_found and render_level <= self._max_recursive_render_depth:
             self._logger.info('Variable found in generated document. Restarting rendering process ...')
-            self._recursive_rendering('', output_path, style_mapper, data, output_path, render_level)
+            self._recursive_rendering('', output_path, style_mapper, data, output_path, image_directory_path, render_level)
 
         if render_level > self._max_recursive_render_depth:
             self._logger.info('Rendering depth level exceeded, leaving render loop')
