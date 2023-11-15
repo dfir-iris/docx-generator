@@ -165,20 +165,99 @@ class RichTextGlobals(object):
 
     def richtext_to_docx(self, richtext: str) -> Subdoc:
         """
-        Converts JSON-string data following the SlateJS WYSIWYG editor data "format" to docx format (https://docs.slatejs.org/).
+        Converts "RichText" JSON-string data to docx. The data follow the SlateJS WYSIWYG editor data "format" (https://docs.slatejs.org/ - https://www.slatejs.org/examples/richtext).
 
-        Uses the style map passed as a parameter to the generate_docx method to map the different node types to their corresponding docx styles.
+        The JSON structure is composed of a list of "nodes" having a "type" and several potential "children".
+        The generator tries to "translate" these nodes into Docx and tries to set a style that is defined in a dictionary under an eponymous key.
+        This dictionary mapping node types to Docx styles is passed as a parameter to the `generate_docx` method.
+        The default JSON structure of such node is as follow:
 
-        Most node types are processed as paragraphs to which an eponymous style is attached.
-        The following styles however have custom rendering processes:
+        {"type": "__node_type__", "children": [__some_children__, ...]}
 
-        * image-uuid
-        * caption
-        * bulleted-list
-        * numbered-list
-        * table
+        ---
 
-        The rendering process only allows list with 1 level at the moment.
+        **Paragraph Node**
+
+        By default, a node is processed as a paragraph.
+        (However it exists several special cases where it does not apply, described underneath)
+        The standard structure for a paragraph node is as follow:
+
+        {"type": "__paragraph_node_type__", "children": [{"text": "Same example text"}, ...]}
+
+        The "type" value is used to assign the correct Docx style.
+        The "children" value contains a list of all the pieces of text contained in the paragraph.
+        It is a list because each piece of text can have different properties: bold, italic, ...
+        The description of all the available properties for a text element will be made in a dedicated section.
+
+        Optional properties:
+
+        * align: string - available values: left, center, right, justify, distribute, justify_med, justify_hi, justify_low, thai_justify
+
+        ---
+
+        **Specific Nodes**
+
+        * `image-uuid`
+
+        Include a local image identified by an UUID
+
+        {"type": "image-uuid", "image_uuid": "5bacc2bc-5b90-4c47-93d7-d9291911c4b3"}
+
+        * `image`
+
+        Include a remote image from an address
+
+        {"type": "image", "image_path": "https://]my_image[/]address.jpg"}
+
+        * `caption`
+
+        Add a caption that is going to be recognized as a member of the table of illustrations by Word. The numbering is directly managed by Word.
+
+        {"type": "caption", "text": "Caption example"}
+
+        Optional properties:
+            * align: string - available values: left, center, right, justify, distribute, justify_med, justify_hi, justify_low, thai_justify
+
+        * `bulleted-list`
+
+        Add a bulleted list.
+        (At the moment rendering process only allows list with 1 level)
+
+        {"type": "bulleted-list", "children": [{"type": "list-item", "children": [{"text": "Item1"}]}, {"type": "list-item", "children": [{"text": "Item2"}]}]}
+
+        * `numbered-list`
+
+        Add a numbered list
+        (At the moment rendering process only allows list with 1 level)
+
+        {"type": "numbered-list", "children": [{"type": "list-item", "children": [{"text": "AAA"}]}, {"type": "list-item", "children": [{"text": "BBB"}]}]}
+
+        * `table`
+
+        Add a table.
+        Children from a `table` node type must be `table-row` nodes.
+        Children from a `table-row` node type must be `table-cell` nodes.
+
+        {type": "table", "children": [{"type": "table-row","children": [{"type": "table-cell","children": [{"type": "paragraph", "children": [{"text": "Same example text"}, ...]}, ...]}
+
+        ---
+
+        **Text Element**
+
+        A text element is used to write some text with specific properties in the docx.
+        A default text element looks as follow:
+
+        {"text": "Same example text"}
+
+        Optional properties:
+
+        * `bold`: boolean
+        * `italic`: boolean
+        * `underline`: boolean
+        * `strike`: boolean
+        * `code`: boolean - changes the font to `Courier New` and highlights the text in light-gray
+
+        ---
 
         :param richtext: str
         """
