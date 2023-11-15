@@ -5,3 +5,4 @@ python-docx==1.0.1
 mistletoe==1.2.1
 markupsafe>=2.0
 setuptools==59.6.0
+requests>=2.31.0
