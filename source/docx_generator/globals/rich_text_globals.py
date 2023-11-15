@@ -45,21 +45,19 @@ def _process_numbered_list_numbering(doc: Document(), par: Paragraph, prev: Para
     the default numbering or bullet style will be used based on the
     ``num`` parameter.
 
-    Parameters
-    ----------
-    doc : docx.document.Document
+    :param doc : docx.document.Document
         The document to add the list into.
-    par : docx.paragraph.Paragraph
+    :param par : docx.paragraph.Paragraph
         The paragraph to turn into a list item.
-    prev : docx.paragraph.Paragraph or None
+    :param prev : docx.paragraph.Paragraph or None
         The previous paragraph in the list. If specified, the numbering
         and styles will be taken as a continuation of this paragraph.
         If omitted, a new numbering scheme will be started.
-    level : int or None
+    :param level : int or None
         The level of the paragraph within the outline. If ``prev`` is
         set, defaults to the same level as in ``prev``. Otherwise,
         defaults to zero.
-    num : bool
+    :param num : bool
         If ``prev`` is :py:obj:`None` and the style of the paragraph
         does not correspond to an existing numbering style, this will
         determine whether or not the list will be numbered or bulleted.
