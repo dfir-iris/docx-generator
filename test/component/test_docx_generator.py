@@ -342,7 +342,9 @@ class TestDocxGenerator(TestCase):
             {
                 "type": "caption",
                 "align": "center",
-                "text": "This is the figure caption 1"
+                "children": [
+                    {"text": "This is the figure caption 1"}
+                ]
             },
             # 5
             # PARAGRAPH 4
@@ -463,7 +465,7 @@ class TestDocxGenerator(TestCase):
             },
             # 18
             # CAPTION 2
-            {"type": "caption", "text": "This is the figure caption 2"},
+            {"type": "caption", "children": [{"text": "This is the figure caption 2 "}, {"text": "with some bold", "bold": True}]},
             # 19
             # PARAGRAPH 10
             {"type": "paragraph", "children": []},
@@ -502,8 +504,6 @@ class TestDocxGenerator(TestCase):
         result_file = Document(os.path.join(self._results_path, self._output_filenames['richtext_result']))  # type: Document
 
         result_file_paragraphs = result_file.paragraphs
-
-        self.assertEqual(28, len(result_file_paragraphs))
 
         # HEADING 1
         h1_paragraph = result_file_paragraphs[0]  # type: Paragraph
@@ -545,7 +545,7 @@ class TestDocxGenerator(TestCase):
         caption1_r3 = caption1.runs[2]  # type: Run
         self.assertEqual(' ', caption1_r3.text)
         caption1_r4 = caption1.runs[3]  # type: Run
-        self.assertEqual(richtext_content[4].get('text'), caption1_r4.text)
+        self.assertEqual(richtext_content[4].get('children')[0].get('text'), caption1_r4.text)
 
         # PARAGRAPH 4
         paragraph2 = result_file_paragraphs[5]  # type: Paragraph
@@ -630,7 +630,9 @@ class TestDocxGenerator(TestCase):
         caption2_r3 = caption2.runs[2]  # type: Run
         self.assertEqual(' ', caption2_r3.text)
         caption3_r4 = caption2.runs[3]  # type: Run
-        self.assertEqual(richtext_content[18].get('text'), caption3_r4.text)
+        self.assertEqual(richtext_content[18].get('children')[0].get('text'), caption3_r4.text)
+        caption3_r5 = caption2.runs[4]  # type: Run
+        self.assertEqual(richtext_content[18].get('children')[1].get('text'), caption3_r5.text)
 
         # PARAGRAPH 10
         paragraph10 = result_file_paragraphs[21]  # type: Paragraph

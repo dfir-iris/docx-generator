@@ -355,7 +355,8 @@ class RichTextGlobals(object):
                     def _render_caption():
                         new_caption_paragraph = _process_caption_node()
                         _process_paragraph_alignment(new_caption_paragraph, child_element)
-                        _process_text(new_caption_paragraph, {"text": child_element.get('text', 'N/A')})
+                        for node_child in node_children:
+                            _process_text(new_caption_paragraph, node_child)
                         return new_caption_paragraph
 
                     return _render_caption()
