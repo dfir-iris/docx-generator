@@ -300,7 +300,7 @@ class RichTextGlobals(object):
             run._r.append(fldChar)
 
             # caption text
-            paragraph.add_run(' ')
+            paragraph.add_run(': ')
 
             return paragraph
 

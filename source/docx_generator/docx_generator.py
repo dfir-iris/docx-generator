@@ -23,6 +23,7 @@ import os
 import re
 from typing import Dict, List
 
+import errno
 from docx.styles.styles import Styles
 from docxtpl import DocxTemplate
 from jinja2 import Environment
@@ -111,9 +112,12 @@ class DocxGenerator(object):
 
         try:
             if not os.path.isdir(full_image_directory_path):
-                os.mkdir(full_image_directory_path)
+                os.makedirs(full_image_directory_path)
 
             return full_image_directory_path
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(full_image_directory_path):
+                return full_image_directory_path
         except Exception as e:
             self._logger.critical("Impossible to create temporary image directory")
             self._logger.debug(f"Image directory error: {e.__str__()}")
