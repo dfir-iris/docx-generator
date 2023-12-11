@@ -543,7 +543,7 @@ class TestDocxGenerator(TestCase):
         caption1_r2 = caption1.runs[1]  # type: Run
         # TODO: Test if caption numbering exist
         caption1_r3 = caption1.runs[2]  # type: Run
-        self.assertEqual(' ', caption1_r3.text)
+        self.assertEqual(': ', caption1_r3.text)
         caption1_r4 = caption1.runs[3]  # type: Run
         self.assertEqual(richtext_content[4].get('children')[0].get('text'), caption1_r4.text)
 
@@ -628,7 +628,7 @@ class TestDocxGenerator(TestCase):
         caption2_r2 = caption2.runs[1]  # type: Run
         # TODO: Test if caption numbering exist
         caption2_r3 = caption2.runs[2]  # type: Run
-        self.assertEqual(' ', caption2_r3.text)
+        self.assertEqual(': ', caption2_r3.text)
         caption3_r4 = caption2.runs[3]  # type: Run
         self.assertEqual(richtext_content[18].get('children')[0].get('text'), caption3_r4.text)
         caption3_r5 = caption2.runs[4]  # type: Run

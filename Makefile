@@ -8,28 +8,22 @@ PYTAG=$(shell grep python-tag setup.cfg | sed 's/python-tag\s=\s//')
 #paths
 SOURCE_PATH=source/
 PROJECT_SOURCE_PATH=$(SOURCE_PATH)$(NAME)
-DOCUMENTATION_SOURCE_DIR=documentation/user_doc/
-DOCUMENTATION_SOURCE_RESULT_DIR=$(DOCUMENTATION_SOURCE_DIR)site/
+
 ##result paths
 RESULTS_PATH=results/
 ARTIFACTS_PATH=$(RESULTS_PATH)artifacts/
 PACKAGE_PATH=$(RESULTS_PATH)package/
-DOCUMENTATION_RESULTS_PATH=$(RESULTS_PATH)documentation/
-BUNDLED_DOCUMENTATION=$(RESULTS_PATH)docx_generator_documentation_$(VERSION).tar.gz
 
 #files
 VERSION_FILE=$(RESULTS_PATH)version.txt
 PACKAGE=$(PACKAGE_PATH)$(PACKAGE_NAME)-$(PYTAG)-none-any.whl
-ARTIFACTS=$(PACKAGE) $(VERSION_FILE) $(BUNDLED_DOCUMENTATION)
+ARTIFACTS=$(PACKAGE) $(VERSION_FILE)
 MAKEFILE_CONF=Makefile.conf
 PROJECT_CONF=Project.conf
 
 #Commands
 PYTHON=python3
 GIT=git
-COVERAGE=python3-coverage
-PYLINT=pylint
-LINECOUNT=sloccount --duplicates --wide --details
 MKDIR=mkdir -p
 RM=rm -rf
 CP=cp -r
@@ -76,16 +70,4 @@ $(VERSION_FILE):
 	echo "REVISION="`$(GIT) rev-parse HEAD^{commit}` >> $(VERSION_FILE)
 
 init:
-	pip install -r dev_requirements.txt
 	pip install -r requirements.txt
-
-dev_doc:
-	cd $(DOCUMENTATION_SOURCE_DIR) && mkdocs serve -a localhost:8888
-
-$(BUNDLED_DOCUMENTATION): $(shell find $(DOCUMENTATION_SOURCE_DIR) -type f) | $(DOCUMENTATION_RESULTS_PATH)
-	cd $(DOCUMENTATION_SOURCE_DIR) && mkdocs build --clean -d ../../$(DOCUMENTATION_RESULTS_PATH)
-	tar czvf $(BUNDLED_DOCUMENTATION) $(RESULTS_PATH)documentation/
-
-#paths creation
-$(DOCUMENTATION_RESULTS_PATH):
-	mkdir -p $(DOCUMENTATION_RESULTS_PATH)
