@@ -17,21 +17,37 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 import logging
+from typing import Dict
 
 from docxtpl import DocxTemplate, RichText
 from jinja2 import Environment
 
 from docx_generator.globals.document_globals import DocumentGlobals
 from docx_generator.globals.picture_globals import PictureGlobals
+from docx_generator.globals.rich_text_globals import RichTextGlobals
 
 
 class Globals(object):
-    def __init__(self, base_path: str, template: DocxTemplate, jinja2_environment: Environment):
+    def __init__(
+            self,
+            base_path: str,
+            output_path: str,
+            image_directory_path: str,
+            template: DocxTemplate,
+            style_mapper: Dict[str, str],
+            jinja2_environment: Environment,
+            allow_external_download: bool,
+            proxy_settings: Dict[str, str]
+    ):
         self._base_path = base_path
+        self._output_path = output_path
+        self._image_directory_path = image_directory_path
         self._template = template
+        self._style_mapper = style_mapper
         self._jinja2_environment = jinja2_environment
+        self._allow_external_download = allow_external_download
+        self._proxy_settings = proxy_settings
 
         self._logger = logging.getLogger(__name__)
 
@@ -58,11 +74,22 @@ class Globals(object):
 
         :return: None
         """
-        picture_filters = PictureGlobals(self._template, self._base_path)
-        document_filters = DocumentGlobals(self._template, self._base_path)
 
-        self._jinja2_environment.globals['addPicture'] = picture_filters.add_picture
-        self._jinja2_environment.globals['addPictureFromUuid'] = picture_filters.add_picture_from_uuid
-        self._jinja2_environment.globals['addSubDocument'] = document_filters.add_sub_document
-        self._jinja2_environment.globals['addSubDocumentFromUuid'] = document_filters.add_sub_document_from_uuid
+        picture_globals = PictureGlobals(self._template, self._base_path, self._image_directory_path)
+        document_globals = DocumentGlobals(self._template, self._base_path)
+        rich_text_globals = RichTextGlobals(
+            self._template,
+            self._base_path,
+            self._output_path,
+            self._image_directory_path,
+            self._style_mapper,
+            self._allow_external_download,
+            self._proxy_settings
+        )
+
+        self._jinja2_environment.globals['addPicture'] = picture_globals.add_picture
+        self._jinja2_environment.globals['addPictureFromUuid'] = picture_globals.add_picture_from_uuid
+        self._jinja2_environment.globals['addSubDocument'] = document_globals.add_sub_document
+        self._jinja2_environment.globals['addSubDocumentFromUuid'] = document_globals.add_sub_document_from_uuid
         self._jinja2_environment.globals['addHyperlink'] = self._hyperlink
+        self._jinja2_environment.globals['addRichtext'] = rich_text_globals.richtext_to_docx
