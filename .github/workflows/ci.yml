@@ -45,6 +45,10 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
+      - name: Set up packaging environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
       - name: Build package
         run: |
           python3 setup.py bdist_wheel
