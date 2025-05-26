@@ -10,13 +10,14 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
       - name: Set up test environment
-        working-directory: test/unit
+        working-directory:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install -r ../../requirements.txt
+          pip install -r requirements.txt
       - name: Run tests
         working-directory: test/unit
         run: |
           source venv/bin/activate
+          cd test/unit
           PYTHONUNBUFFERED=true PYTHONPATH=../../source python -m unittest --verbose
