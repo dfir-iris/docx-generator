@@ -39,3 +39,18 @@ jobs:
           mkdir tmp
           PYTHONUNBUFFERED=true PYTHONPATH=../../source python -m unittest --verbose
 
+  package:
+    name: Package python wheel
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Build package
+        run: |
+          python3 setup.py bdist_wheel
+      - uses: actions/upload-artifact@v4
+        with:
+            name: Wheel package
+            path: dist
+            if-no-files-found: error
+
