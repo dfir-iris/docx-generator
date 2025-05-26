@@ -49,6 +49,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
+          pip install wheel
       - name: Build package
         run: |
           source venv/bin/activate
