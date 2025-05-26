@@ -19,3 +19,23 @@ jobs:
           source venv/bin/activate
           cd test/unit
           PYTHONUNBUFFERED=true PYTHONPATH=../../source python -m unittest --verbose
+
+  tests-component:
+    name: Component tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Set up test environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          cd test/component
+          mkdir results
+          mkdir tmp
+          PYTHONUNBUFFERED=true PYTHONPATH=../../source python -m unittest --verbose
+
