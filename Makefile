@@ -60,7 +60,7 @@ help:
 	@:
 
 #files creation
-$(PROJECT_CONF): 
+$(PROJECT_CONF): VERSION requirements.txt
 	cat $(MAKEFILE_CONF) > $(PROJECT_CONF)
 	echo "" >> $(PROJECT_CONF)
 	echo "VERSION="$(VERSION) >> $(PROJECT_CONF)
