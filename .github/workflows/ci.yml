@@ -55,6 +55,7 @@ jobs:
           pip install -r dev_requirements.txt
       - name: Build documentation
         run: |
+          source venv/bin/activate
           cd documentation/user_doc && mkdocs build --clean --site-dir ../../results/documentation/
           tar czvf results/docx_generator_documentation_${{ env.VERSION }}.tar.gz results/documentation/
       - uses: actions/upload-artifact@v4
