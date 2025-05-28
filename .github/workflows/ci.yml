@@ -56,7 +56,7 @@ jobs:
       - name: Build documentation
         run: |
           source venv/bin/activate
-          cd documentation/user_doc && mkdocs build --clean --site-dir ../../results/documentation/
+          (cd documentation/user_doc && mkdocs build --clean --site-dir ../../results/documentation/)
           tar czvf results/docx_generator_documentation_${{ env.VERSION }}.tar.gz results/documentation/
       - uses: actions/upload-artifact@v4
         with:
