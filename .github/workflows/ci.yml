@@ -45,9 +45,6 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-      - name: Retrieve version
-        run: |
-          echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
       - name: Set up build environment
         run: |
           python -m venv venv
@@ -56,12 +53,12 @@ jobs:
       - name: Build documentation
         run: |
           source venv/bin/activate
-          (cd documentation/user_doc && mkdocs build --clean --site-dir ../../results/documentation/)
-          tar czvf results/docx_generator_documentation_${{ env.VERSION }}.tar.gz results/documentation/
+          cd documentation/user_doc
+          mkdocs build --clean --site-dir ../../results/documentation/
       - uses: actions/upload-artifact@v4
         with:
             name: Documentation
-            path: results/docx_generator_documentation_${{ env.VERSION }}.tar.gz
+            path: results/documentation/*
             if-no-files-found: error
 
 
