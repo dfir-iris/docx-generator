@@ -61,7 +61,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
             name: Documentation
-            path: esults/docx_generator_documentation_${{ env.VERSION }}.tar.gz
+            path: results/docx_generator_documentation_${{ env.VERSION }}.tar.gz
             if-no-files-found: error
 
 
