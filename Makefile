@@ -18,9 +18,8 @@ DOCUMENTATION_RESULTS_PATH=$(RESULTS_PATH)documentation/
 BUNDLED_DOCUMENTATION=$(RESULTS_PATH)docx_generator_documentation_$(VERSION).tar.gz
 
 #files
-VERSION_FILE=$(RESULTS_PATH)version.txt
 PACKAGE=$(PACKAGE_PATH)$(PACKAGE_NAME)-$(PYTAG)-none-any.whl
-ARTIFACTS=$(PACKAGE) $(VERSION_FILE) $(BUNDLED_DOCUMENTATION)
+ARTIFACTS=$(PACKAGE) $(BUNDLED_DOCUMENTATION)
 MAKEFILE_CONF=Makefile.conf
 PROJECT_CONF=Project.conf
 
@@ -68,12 +67,6 @@ $(PROJECT_CONF): VERSION requirements.txt
 
 $(PACKAGE): $(PROJECT_CONF)
 	$(PYTHON) setup.py bdist_wheel --dist-dir=$(PACKAGE_PATH) # Info in setup.cfg
-
-$(VERSION_FILE):
-	echo "NAME="$(NAME) > $(VERSION_FILE)
-	echo "VERSION="$(VERSION) >> $(VERSION_FILE)
-	echo "REPOSITORY="$(REPOSITORY) >> $(VERSION_FILE)
-	echo "REVISION="`$(GIT) rev-parse HEAD^{commit}` >> $(VERSION_FILE)
 
 init:
 	pip install -r dev_requirements.txt
