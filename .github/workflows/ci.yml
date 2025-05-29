@@ -22,9 +22,7 @@ jobs:
       - name: Build package
         run: uv build
       - name: Build documentation
-        run: |
-          cd documentation/user_doc
-          uv run mkdocs build --clean --site-dir ../../results/documentation/
+        run: uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../results/documentation/
       - name: Run unit tests
         # TODO should be able to run all tests from top directory!!!
         run: |
