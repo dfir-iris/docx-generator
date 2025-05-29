@@ -6,7 +6,7 @@ PACKAGE_NAME=$(NAME)-$(VERSION)
 PYTAG=$(shell grep python-tag setup.cfg | sed 's/python-tag\s=\s//')
 
 #paths
-SOURCE_PATH=source/
+SOURCE_PATH=src/
 PROJECT_SOURCE_PATH=$(SOURCE_PATH)$(NAME)
 DOCUMENTATION_SOURCE_DIR=documentation/user_doc/
 DOCUMENTATION_SOURCE_RESULT_DIR=$(DOCUMENTATION_SOURCE_DIR)site/

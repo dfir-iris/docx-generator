@@ -32,8 +32,8 @@ with open('Project.conf') as configuration:
 
 setup(name=project_description['NAME'],
       version=project_description['VERSION'],
-      package_dir={'': 'source'},
-      packages=find_packages('source'),
+      package_dir={'': 'src'},
+      packages=find_packages('src'),
       author=project_description['AUTHOR'],
       author_email=project_description['EMAIL'],
       url=project_description['URL'],
