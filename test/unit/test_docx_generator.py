@@ -40,7 +40,7 @@ class TestDocxGenerator(TestCase):
         except OSError:
             pass
 
-    def test_generate_docx_shout_not_fail(self):
+    def test_generate_docx_should_not_fail(self):
         self._subject.generate_docx(self._base_path, self._template_path, {}, self._result_path)
 
     def test_generate_docx_should_create_docx_file(self):
