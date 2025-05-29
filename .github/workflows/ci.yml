@@ -3,29 +3,6 @@ on: [push, pull_request]
 
 jobs:
 
-  build-documentation:
-    name: Build documentation
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check out
-        uses: actions/checkout@v4
-      - name: Set up build environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r dev_requirements.txt
-      - name: Build documentation
-        run: |
-          source venv/bin/activate
-          cd documentation/user_doc
-          mkdocs build --clean --site-dir ../../results/documentation/
-      - uses: actions/upload-artifact@v4
-        with:
-            name: Documentation
-            path: results/documentation/*
-            if-no-files-found: error
-
-
   build:
     name: Build
     runs-on: ubuntu-22.04
@@ -44,6 +21,10 @@ jobs:
         run: uv sync --locked --all-extras --dev
       - name: Build package
         run: uv build
+      - name: Build documentation
+        run: |
+          cd documentation/user_doc
+          uv run mkdocs build --clean --site-dir ../../results/documentation/
       - name: Run unit tests
         # TODO should be able to run all tests from top directory!!!
         run: |
@@ -60,5 +41,10 @@ jobs:
         with:
             name: Wheel package
             path: dist
+            if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+            name: Documentation
+            path: results/documentation/*
             if-no-files-found: error
 

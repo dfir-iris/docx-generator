@@ -25,3 +25,8 @@ Repository = "https://github.com/dfir-iris/docx-generator.git"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "mkdocs==1.2.4",
+]
+
