@@ -18,7 +18,7 @@ jobs:
         run: |
           source venv/bin/activate
           cd test/unit
-          PYTHONUNBUFFERED=true PYTHONPATH=../../source python -m unittest --verbose
+          PYTHONUNBUFFERED=true PYTHONPATH=../../src python -m unittest --verbose
 
   tests-component:
     name: Component tests
@@ -37,7 +37,7 @@ jobs:
           cd test/component
           mkdir results
           mkdir tmp
-          PYTHONUNBUFFERED=true PYTHONPATH=../../source python -m unittest --verbose
+          PYTHONUNBUFFERED=true PYTHONPATH=../../src python -m unittest --verbose
 
   build-documentation:
     name: Build documentation
