@@ -51,9 +51,9 @@ jobs:
             if-no-files-found: error
       - name: Release
         uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
           files: |
             documentation-${{ env.VERSION }}.tar.gz
             dist/*
           fail_on_unmatched_files: true
-          tag_name: 0.9.0b1-test
