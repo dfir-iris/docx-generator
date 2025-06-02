@@ -25,7 +25,7 @@ jobs:
         run: uv build
       - name: Build documentation
         run: |
-          uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../results/documentation-${{ env.VERSION }}/
+          uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../documentation-${{ env.VERSION }}/
           tar czf documentation-${{ env.VERSION }}.tar.gz documentation-${{ env.VERSION }}/
       - name: Run unit tests
         # TODO should be able to run all tests from top directory!!!
