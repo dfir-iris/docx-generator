@@ -45,4 +45,9 @@ jobs:
             name: Documentation
             path: results/documentation/*
             if-no-files-found: error
-
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            documentation/*
+            dist/*
