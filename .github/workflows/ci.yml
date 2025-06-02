@@ -13,6 +13,8 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.7.8"
+      - name: Retrieve version number
+        run: echo "VERSION=$(uv version --short)" >> $GITHUB_ENV
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -22,7 +24,9 @@ jobs:
       - name: Build package
         run: uv build
       - name: Build documentation
-        run: uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../results/documentation/
+        run: |
+          uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../results/documentation-${{ env.VERSION }}/
+          tar czf documentation-${{ env.VERSION }}.tar.gz documentation-${{ env.VERSION }}/
       - name: Run unit tests
         # TODO should be able to run all tests from top directory!!!
         run: |
@@ -43,13 +47,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
             name: Documentation
-            path: results/documentation/*
+            path: results/documentation-${{ env.VERSION }}/*
             if-no-files-found: error
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            results/documentation/*
+            documentation-${{ env.VERSION }}.tar.gz
             dist/*
           fail_on_unmatched_files: true
           tag_name: 0.9.0b1-test
