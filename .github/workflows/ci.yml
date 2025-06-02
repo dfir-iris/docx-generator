@@ -51,3 +51,5 @@ jobs:
           files: |
             documentation/*
             dist/*
+          fail_on_unmatched_files: true
+          tag_name: 0.9.0b1-test
