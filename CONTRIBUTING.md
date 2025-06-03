@@ -8,6 +8,11 @@ This project uses [uv](https://docs.astral.sh/uv/).
 uv build
 ```
 
+* To run ruff checks:
+```
+uv run ruff check .
+```
+
 * To serve the documentation:
 ```
 uv --directory documentation/user_doc run mkdocs serve -a localhost:8888
