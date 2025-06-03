@@ -3,6 +3,23 @@ on: [push, pull_request]
 
 jobs:
 
+  static-checks:
+    name: Static analyis checks
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Check source with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check --output-format=github
+          src: ./source
+      - name: Check tests with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check --output-format=github
+          src: ./tests
+
   build:
     name: Build
     runs-on: ubuntu-22.04

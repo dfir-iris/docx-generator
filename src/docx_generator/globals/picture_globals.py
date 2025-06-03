@@ -25,7 +25,6 @@ import requests
 import shutil
 import uuid
 
-import urllib3.connection
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docxtpl import DocxTemplate, Subdoc
 
