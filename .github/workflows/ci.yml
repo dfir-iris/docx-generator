@@ -57,5 +57,4 @@ jobs:
             dist/*
           fail_on_unmatched_files: true
           body: Release ${{ env.VERSION }}
-          generate_release_notes: false
           tag_name: 0.9.0b1-test
