@@ -40,8 +40,8 @@ class PictureGlobals(object):
         self._output_path = os.path.join(base_path, 'tmp', 'images')
 
         self._available_alignment_values = []
-        for member in WD_PARAGRAPH_ALIGNMENT.__members__:
-            self._available_alignment_values.append(getattr(member, 'name', member))
+        for member in WD_PARAGRAPH_ALIGNMENT:
+            self._available_alignment_values.append(member.name)
 
         self._logger = logging.getLogger(__name__)
 
