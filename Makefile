@@ -17,11 +17,7 @@ clean:
 
 help:
 	$(info Available targets:)
-	$(info dev_doc: serve documentation)
 	$(info clean: cleans repository)
 	$(info help: displays this message)
 	@:
-
-dev_doc:
-	cd documentation/user_doc/ && mkdocs serve -a localhost:8888
 
