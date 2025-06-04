@@ -20,7 +20,7 @@
 
 import os
 import re
-from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from docx import Document
@@ -34,7 +34,9 @@ class TestDocxGenerator(TestCase):
     def setUp(self) -> None:
         self._base_path = os.path.join(os.getcwd(), 'test/component')
         self._template_path = 'templates'
-        self._results_path = 'results'
+        self._results_directory = TemporaryDirectory(dir=self._base_path)
+        # TODO code smell, we shouldn't have to do that. This shows the generate_docx method is too complex to use
+        self._results_path = self._results_directory.name.split('/')[-1]
 
         self._output_filenames = {
             'basic_template_result': 'basic_template_result.docx',
@@ -52,16 +54,10 @@ class TestDocxGenerator(TestCase):
             'unclosed_jinja_control_tag_result': 'unclosed_jinja_control_tag_result.docx'
         }
 
-        Path(self._base_path, self._results_path).mkdir(exist_ok=True)
         self._subject = DocxGenerator(logger_mode='DEBUG')
 
     def tearDown(self) -> None:
-        return None
-        for filename in self._output_filenames.values():
-            try:
-                os.remove(os.path.join(self._results_path, filename))
-            except FileNotFoundError:
-                pass
+        self._results_directory.cleanup()
 
     def test_should_generate_docx_from_basic_template(self):
         text_to_add = 'Report Name'
@@ -209,6 +205,8 @@ class TestDocxGenerator(TestCase):
             'text_for_code_block': markdown_text2
         }
 
+        print('----------------------------------')
+        print(self._results_path)
         self._subject.generate_docx(
             self._base_path,
             os.path.join(self._template_path, 'markdown_filter_template.docx'),

@@ -40,6 +40,7 @@ def _sanitize_path(path: str) -> str:
 
 
 class DocxGenerator(object):
+
     def __init__(self, logger_mode: str = 'INFO', max_recursive_render_depth: int = 5,
                  image_handler: PictureGlobals = None, app_logger: logging = None):
 
