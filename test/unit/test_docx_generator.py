@@ -28,7 +28,7 @@ from docx_generator.exceptions.rendering_error import RenderingError
 class TestDocxGenerator(TestCase):
     def setUp(self) -> None:
         # Create mock template file
-        self._base_path = './template'
+        self._base_path = 'test/unit/template'
         self._result_path = 'result.docx'
         self._template_path = 'test_template.docx'
 

@@ -24,6 +24,7 @@ import re
 import requests
 import shutil
 import uuid
+from pathlib import Path
 
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docxtpl import DocxTemplate, Subdoc
@@ -100,8 +101,10 @@ class PictureGlobals(object):
 
         :return: docxtpl.Subdoc
         """
-        if not os.path.isdir(self._output_path):
-            os.mkdir(self._output_path)
+
+        # TODO a tmp/images directory will be created, but never removed. Probably not very clean for the library user
+        #      Use tempfile instead?
+        Path(self._output_path).mkdir(parents=True, exist_ok=True)
 
         try:
             image_path = self._process_remote(image_path)

@@ -20,6 +20,7 @@
 
 import os
 import re
+from pathlib import Path
 from unittest import TestCase
 
 from docx import Document
@@ -31,7 +32,7 @@ from docx_generator.exceptions.rendering_error import RenderingError
 
 class TestDocxGenerator(TestCase):
     def setUp(self) -> None:
-        self._base_path = os.getcwd()
+        self._base_path = os.path.join(os.getcwd(), 'test/component')
         self._template_path = 'templates'
         self._results_path = 'results'
 
@@ -51,6 +52,7 @@ class TestDocxGenerator(TestCase):
             'unclosed_jinja_control_tag_result': 'unclosed_jinja_control_tag_result.docx'
         }
 
+        Path(self._base_path, self._results_path).mkdir(exist_ok=True)
         self._subject = DocxGenerator(logger_mode='DEBUG')
 
     def tearDown(self) -> None:
@@ -75,7 +77,7 @@ class TestDocxGenerator(TestCase):
         )
 
         has_been_found = False
-        document = Document(os.path.join(self._results_path, self._output_filenames['basic_template_result']))
+        document = Document(os.path.join(self._base_path, self._results_path, self._output_filenames['basic_template_result']))
         for paragraph in document.paragraphs:
             if re.search(text_to_add, paragraph.text) is not None:
                 has_been_found = True
@@ -98,7 +100,7 @@ class TestDocxGenerator(TestCase):
         )
 
         has_been_found = False
-        document = Document(os.path.join(self._results_path, self._output_filenames['date_filter_template_result']))
+        document = Document(os.path.join(self._base_path, self._results_path, self._output_filenames['date_filter_template_result']))
         for paragraph in document.paragraphs:
             if re.search(converted_date, paragraph.text) is not None:
                 has_been_found = True
@@ -123,7 +125,7 @@ class TestDocxGenerator(TestCase):
         )
 
         # TESTS
-        generated_document = Document(os.path.join(self._results_path, self._output_filenames['hyperlink_global_result']))
+        generated_document = Document(os.path.join(self._base_path, self._results_path, self._output_filenames['hyperlink_global_result']))
 
         found_hyperlinks = []
 
@@ -138,8 +140,8 @@ class TestDocxGenerator(TestCase):
 
     def test_should_generate_docx_from_template_with_image_global(self):
         data = {
-            'image1': os.path.abspath('./images/test_image.jpg'),
-            'image2': os.path.abspath('./images/test_image_small.jpg')
+            'image1': os.path.abspath(os.path.join(self._base_path, './images/test_image.jpg')),
+            'image2': os.path.abspath(os.path.join(self._base_path, './images/test_image_small.jpg'))
         }
 
         self._subject.generate_docx(
@@ -215,7 +217,7 @@ class TestDocxGenerator(TestCase):
         )
 
     def test_should_generate_docx_from_template_with_subdocument_global(self):
-        subdoc_path = os.path.join(self._template_path, 'sub_document_filter_template_part.docx')
+        subdoc_path = os.path.join(self._base_path, self._template_path, 'sub_document_filter_template_part.docx')
 
         data = {
             'sub_document_path': subdoc_path
@@ -229,7 +231,7 @@ class TestDocxGenerator(TestCase):
         )
 
     def test_should_generate_docx_with_nested_variables(self):
-        subdoc_path = os.path.join(self._template_path, 'sub_document_filter_template_part_with_nested_variable.docx')
+        subdoc_path = os.path.join(self._base_path, self._template_path, 'sub_document_filter_template_part_with_nested_variable.docx')
 
         data = {
             'sub_document_path': subdoc_path,
@@ -245,7 +247,7 @@ class TestDocxGenerator(TestCase):
         )
 
     def test_should_generate_docx_with_nested_variables_up_to_5_render(self):
-        subdoc_path = os.path.join(self._template_path, 'sub_document_filter_template_part_with_nested_variable.docx')
+        subdoc_path = os.path.join(self._base_path, self._template_path, 'sub_document_filter_template_part_with_nested_variable.docx')
 
         data = {
             'sub_document_path': subdoc_path,

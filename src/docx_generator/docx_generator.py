@@ -98,6 +98,8 @@ class DocxGenerator(object):
 
         try:
             loaded_template.render(data, jinja_env=jinja_custom_environment, autoescape=True)
+        except RenderingError as e:
+            raise e
         except Exception as e:
             error_message = '{} ({})'.format(str(e), os.path.basename(template_path))
             raise RenderingError(self._logger, error_message)
