@@ -10,7 +10,7 @@ uv build
 
 * run tests:
 ```
-uv run ruff check .
+uv run python -m unittest --verbose
 ```
 
 * run ruff checks:
