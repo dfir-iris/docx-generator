@@ -68,7 +68,7 @@ class DocxRenderer(BaseRenderer):
 
     @debug_token_rendering('Rendering Image.')
     def render_image(self, token):
-        if self._image_handler != None:
+        if self._image_handler is not None:
             self._image_handler.set_template(self._template)
             image = self._image_handler.add_picture(token.src)
             return str(image)

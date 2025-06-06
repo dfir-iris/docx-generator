@@ -1,0 +1,61 @@
+name: Continuous Integration
+on: [push, pull_request]
+
+jobs:
+
+  static-checks:
+    name: Static analyis checks
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Run ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check --output-format=github
+
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.7.8"
+      - name: Retrieve version number
+        run: echo "VERSION=$(uv version --short)" >> $GITHUB_ENV
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+      - name: Build package
+        run: uv build
+      - name: Build documentation
+        run: |
+          uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../documentation-${{ env.VERSION }}/
+          tar czf documentation-${{ env.VERSION }}.tar.gz documentation-${{ env.VERSION }}/
+      - name: Run tests
+        run: uv run python -m unittest --verbose
+      - uses: actions/upload-artifact@v4
+        with:
+            name: Wheel package
+            path: dist
+            if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+            name: Documentation
+            path: documentation-${{ env.VERSION }}/*
+            if-no-files-found: error
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            documentation-${{ env.VERSION }}.tar.gz
+            dist/*
+          fail_on_unmatched_files: true
+          body: Release ${{ env.VERSION }}

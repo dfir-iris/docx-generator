@@ -26,7 +26,7 @@ from typing import Dict
 from docxtpl import DocxTemplate
 from jinja2 import Environment
 
-from docx_generator.adapters.docx.style_adapter import RenderStylesCollection, get_document_render_styles, _BEGIN_STYLE, _END_STYLE, _TAG_STYLE
+from docx_generator.adapters.docx.style_adapter import RenderStylesCollection, get_document_render_styles
 from docx_generator.adapters.mistletoe.DocxRenderer import DocxRenderer
 from docx_generator.exceptions.rendering_error import RenderingError
 from docx_generator.filters.filters import Filters
@@ -40,6 +40,7 @@ def _sanitize_path(path: str) -> str:
 
 
 class DocxGenerator(object):
+
     def __init__(self, logger_mode: str = 'INFO', max_recursive_render_depth: int = 5,
                  image_handler: PictureGlobals = None, app_logger: logging = None):
 
@@ -98,6 +99,8 @@ class DocxGenerator(object):
 
         try:
             loaded_template.render(data, jinja_env=jinja_custom_environment, autoescape=True)
+        except RenderingError as e:
+            raise e
         except Exception as e:
             error_message = '{} ({})'.format(str(e), os.path.basename(template_path))
             raise RenderingError(self._logger, error_message)
@@ -138,9 +141,10 @@ class DocxGenerator(object):
         full_template_path = self._process_template_path(processed_base_path, template_path)
         full_output_path = self._process_output_path(processed_base_path, output_path)
 
-        if self._image_handler != None:
+        if self._image_handler is not None:
             self._image_handler.set_base_path(processed_base_path)
             self._image_handler.set_output_path(os.path.join(os.path.dirname(full_output_path), "images"))
 
-        self._logger.info('Starting new report generation. Base path: {}. Template path: {}. Output path'.format(processed_base_path, full_template_path, full_output_path))
+        self._logger.info(f'Starting new report generation. Base path: {processed_base_path}. '
+                          f'Template path: {full_template_path}. Output path {full_output_path}')
         self._recursive_rendering(processed_base_path, full_template_path, data, full_output_path, 0)

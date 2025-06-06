@@ -1,0 +1,33 @@
+[project]
+name = "docx-generator"
+version = "0.9.0"
+description = "Tool to generate docx report from docx template and json data"
+readme = "README.md"
+authors = [
+    { name = "Pierre PRUNIERES", email = "pierre.p.prunieres@airbus.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "docxcompose==1.1.2",
+    "docxtpl==0.19.0",
+    "jinja2>=3.0",
+    "markupsafe>=2.0",
+    "mistletoe==0.7.2",
+    "python-docx==1.1.2",
+    "requests~=2.31.0",
+    "setuptools==65.5.1",
+]
+
+[project.urls]
+Repository = "https://github.com/dfir-iris/docx-generator.git"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mkdocs==1.2.4",
+    "ruff>=0.11.12",
+]
+

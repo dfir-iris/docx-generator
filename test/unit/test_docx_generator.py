@@ -28,7 +28,7 @@ from docx_generator.exceptions.rendering_error import RenderingError
 class TestDocxGenerator(TestCase):
     def setUp(self) -> None:
         # Create mock template file
-        self._base_path = './template'
+        self._base_path = 'test/unit/template'
         self._result_path = 'result.docx'
         self._template_path = 'test_template.docx'
 
@@ -40,7 +40,7 @@ class TestDocxGenerator(TestCase):
         except OSError:
             pass
 
-    def test_generate_docx_shout_not_fail(self):
+    def test_generate_docx_should_not_fail(self):
         self._subject.generate_docx(self._base_path, self._template_path, {}, self._result_path)
 
     def test_generate_docx_should_create_docx_file(self):

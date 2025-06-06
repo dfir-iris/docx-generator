@@ -20,7 +20,8 @@
 
 import logging
 
-from docxtpl import DocxTemplate, RichText
+from docxtpl import DocxTemplate
+from docxtpl import RichText
 from jinja2 import Environment
 
 from docx_generator.globals.document_globals import DocumentGlobals
