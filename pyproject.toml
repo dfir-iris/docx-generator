@@ -15,7 +15,6 @@ dependencies = [
     "mistletoe==0.7.2",
     "python-docx==1.1.2",
     "requests~=2.31.0",
-    "setuptools==65.5.1",
 ]
 
 [project.urls]
