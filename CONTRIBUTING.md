@@ -32,8 +32,7 @@ uv --directory documentation/user_doc run mkdocs build --clean --site-dir ../../
 
 The creation of a tag will automatically publish a release on Github. Ensure the tag is named with the version number:
 ```
-VERSION=$(uv version --short) && echo $VERSION
+VERSION=v$(uv version --short) && echo $VERSION
 git tag -s $VERSION -m "Release $VERSION"
 git push --tags
 ```
-
